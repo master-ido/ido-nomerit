@@ -122,18 +122,28 @@ def synthetic_division(b_n, x):
     c_n = []
     d_n = []
     c_n.append(b_n[0])
-    for i in range(1, len(b_n)):
+    for i in range(1, len(b_n) - 1):
         c_n.append(b_n[i] + x * c_n[i - 1])
     # c_n is ready, thus r_0 is:
-    r_0 = c_n[-1]
+    r_0 = b_n[-1] + x * c_n[-1]
     d_n.append(c_n[0])
-    for i in range(1, len(c_n)):
+    for i in range(1, len(c_n) - 1):
         d_n.append(c_n[i] + x * d_n[i - 1])
     # d_n is ready, thus r_1 is:
-    r_1 = d_n[-1]
+    r_1 = c_n[-1] + x * d_n[-1]
     # newton raphson with our r's:
     x_new = x - (r_0 / r_1)
     if abs(x_new - x) < 10 ** -7:
         return x_new
     else:
         return synthetic_division(b_n, x_new)
+
+def find_roots_with_synthetic_division(b_n, start, end, step):
+    roots = []
+    for i in range(start, end, step):
+        if i == 0:
+            continue
+        if round(synthetic_division(b_n, i), 7) in roots:
+            continue
+        roots.append(round(synthetic_division(b_n, i), 7))
+    return roots
