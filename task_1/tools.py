@@ -1,4 +1,5 @@
 import math
+import matplotlib.pyplot as plt
 import numpy as np
 # Reading a matrix
 def txt_to_matrix(txt):
@@ -96,11 +97,15 @@ def bisection(function, a, b):
 
 def find_roots_with_bisection(function, start, end, step):
     # use different steps, to make sure you didnt miss a root
+    roots = []
     for i in np.arange(start, end, step):
         if bisection(function, i, i + step) == None:
-            print(f"There are no roots between {i}, {i + step}")
-        else:
-            print(f"The root between {i}, {i + step} is {bisection(function, i, i + step)}")
+            continue
+            # print(f"There are no roots between {i}, {i + step}")
+        if bisection(function, i, i + step) in roots:
+            continue
+        roots.append(round(bisection(function, i, i + step), 5))
+    print(f"Using Bisection, the roots between {start}, {end} are {roots}")
 
 def numeric_derivative(function, x):
     return (function(x + 10 ** -7) - function(x)) / (10 ** -7)
@@ -113,8 +118,12 @@ def newton_raphson(function, x):
     return newton_raphson(function, x_new)
 
 def find_roots_with_newton_raphson(function, start, end, step):
+    roots = []
     for i in np.arange(start, end, step):
-        print(f'Using the initial guess {i}, the root is {newton_raphson(function, i)}')
+        if round(newton_raphson(function, i),5) in roots:
+            continue
+        roots.append(round(newton_raphson(function, i), 5))
+    print(f'Using Newton-Raphson, the roots between {start}, {end} are {roots}')
 
 
 def synthetic_division(b_n, x):
@@ -143,7 +152,49 @@ def find_roots_with_synthetic_division(b_n, start, end, step):
     for i in range(start, end, step):
         if i == 0:
             continue
-        if round(synthetic_division(b_n, i), 7) in roots:
+        if round(synthetic_division(b_n, i), 5) in roots:
             continue
-        roots.append(round(synthetic_division(b_n, i), 7))
-    return roots
+        roots.append(round(synthetic_division(b_n, i), 5))
+    print(f'Using Synthetic Division, the roots between {start}, {end} are {roots}')
+
+
+def present_function(function):
+    x = np.linspace(-10, 10, 500)  # From -10 to 10, 400 points
+    y = function(x)
+    plt.plot(x, y, color='blue')
+    plt.axhline(0, color='gray', linewidth=0.5)  # x-axis
+    plt.axvline(0, color='gray', linewidth=0.5)  # y-axis
+    plt.title("Plot of f(x)")
+    plt.xlabel("x")
+    plt.ylabel("f(x)")
+    # plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def partial_derivative_dx(function, x, y):
+    df_dx = (function(x + 1e-5, y) - function(x, y)) / 1e-5
+    return df_dx
+
+def partial_derivative_dy(function, x, y):
+    df_dy = (function(x, y + 1e-5) - function(x, y)) / 1e-5
+    return df_dy
+
+def newton_raphson_2D(f, g, x, y):
+    x_new = x - ((f(x, y) * partial_derivative_dy(g, x, y))- g(x, y) * partial_derivative_dy(f, x, y)) \
+        / ((partial_derivative_dx(f, x, y) * partial_derivative_dy(g, x ,y)) - partial_derivative_dx(g, x, y) * partial_derivative_dy(f, x ,y))
+
+    y_new = y - ((g(x, y) * partial_derivative_dx(f, x, y)) - f(x, y) * partial_derivative_dx(g, x, y)) \
+        / ((partial_derivative_dx(f, x, y) * partial_derivative_dy(g, x, y)) - partial_derivative_dx(g, x, y) * partial_derivative_dy(f, x, y))
+
+    if abs(x_new - x) and abs(y_new - y) < 10 ** -7:
+        return x_new, y_new
+    return newton_raphson_2D(f, g, x_new, y_new)
+
+def f(x, y):
+    return (4 * y ** 2) + (4 * y) - (52 * x) - 19
+
+def g(x, y):
+    return (169 * x ** 2) + (3 * y ** 2) - (111 * x) - (10 * y)
+
+print(newton_raphson_2D(f, g, -0.01, -0.01))
