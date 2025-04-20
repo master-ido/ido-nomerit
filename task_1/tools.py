@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+
 # Reading a matrix
 def txt_to_matrix(txt):
     with open(txt, "r") as file:
@@ -159,7 +160,7 @@ def find_roots_with_synthetic_division(b_n, start, end, step):
 
 
 def present_function(function):
-    x = np.linspace(-10, 10, 500)  # From -10 to 10, 400 points
+    x = np.linspace(-5, 3, 500)  # From -10 to 10, 400 points
     y = function(x)
     plt.plot(x, y, color='blue')
     plt.axhline(0, color='gray', linewidth=0.5)  # x-axis
@@ -180,16 +181,22 @@ def partial_derivative_dy(function, x, y):
     df_dy = (function(x, y + 1e-5) - function(x, y)) / 1e-5
     return df_dy
 
-def newton_raphson_2D(f, g, x, y):
-    x_new = x - ((f(x, y) * partial_derivative_dy(g, x, y))- g(x, y) * partial_derivative_dy(f, x, y)) \
-        / ((partial_derivative_dx(f, x, y) * partial_derivative_dy(g, x ,y)) - partial_derivative_dx(g, x, y) * partial_derivative_dy(f, x ,y))
+def newton_raphson_2D(f, g, x, y, x0=None, y0=None):
+    if x0 is None and y0 is None:
+        x0, y0 = x, y
 
-    y_new = y - ((g(x, y) * partial_derivative_dx(f, x, y)) - f(x, y) * partial_derivative_dx(g, x, y)) \
-        / ((partial_derivative_dx(f, x, y) * partial_derivative_dy(g, x, y)) - partial_derivative_dx(g, x, y) * partial_derivative_dy(f, x, y))
+    df_dx = partial_derivative_dx(f, x, y)
+    df_dy = partial_derivative_dy(f, x, y)
+    dg_dx = partial_derivative_dx(g, x, y)
+    dg_dy = partial_derivative_dy(g, x, y)
+
+    x_new = x - ((f(x, y) * dg_dy) - g(x, y) * df_dy) / (df_dx * dg_dy - dg_dx * df_dy)
+    y_new = y - ((g(x, y) * df_dx) - f(x, y) * dg_dx) / (df_dx * dg_dy - dg_dx * df_dy)
 
     if abs(x_new - x) and abs(y_new - y) < 10 ** -7:
-        return x_new, y_new
-    return newton_raphson_2D(f, g, x_new, y_new)
+        print(f'Using Newton-Raphson, the solution for starting point ({x0}, {y0}) is ({round(x_new, 5)}, {round(y_new, 5)})')
+        return
+    return newton_raphson_2D(f, g, x_new, y_new, x0, y0)
 
 def f(x, y):
     return (4 * y ** 2) + (4 * y) - (52 * x) - 19
@@ -197,4 +204,20 @@ def f(x, y):
 def g(x, y):
     return (169 * x ** 2) + (3 * y ** 2) - (111 * x) - (10 * y)
 
-print(newton_raphson_2D(f, g, -0.01, -0.01))
+
+
+def present_function_3D(function):
+    x = np.linspace(-10, 10, 50)
+    y = np.linspace(-5, 5, 50)
+
+    X, Y = np.meshgrid(x, y)
+    Z = function(X, Y)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.plot_surface(X, Y, Z, cmap='Purples', edgecolor='none')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    plt.show()
