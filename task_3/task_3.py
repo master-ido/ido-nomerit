@@ -1,18 +1,26 @@
 def gauss(matrix, vector):
-    # first line
-    for j in range(1, len(matrix[0])):
-        matrix[0][j] = matrix[0][j] / matrix[0][0]
-    vector[0] = vector[0] / matrix[0][0]
-    matrix[0][0] = 1
-    # other lines
-    for k in range(1, len(matrix)):
-        for j in range(len(matrix)):
-            matrix[k][j] = matrix[k][j] - (matrix[k][j] * matrix[k - 1][j])
-        vector[k] = vector[k] - (matrix[k][j] * vector[k - 1])
+    # first step
+    for i in range(len(matrix)):
+        for j in range(i + 1, len(matrix)):
+            matrix[i][j] = matrix[i][j] / matrix[i][i]
+        vector[i] = vector[i] / matrix[i][i]
+        matrix[i][i] = 1
+        # print(matrix)
+        # second step
+        for k in range(i + 1, len(matrix)):
+            for j in range(i, len(matrix)):
+                matrix[k][j] = matrix[k][j] - (matrix[k][j] * matrix[k - 1][j])
+            vector[k] = vector[k] - (matrix[k][j] * vector[k - 1])
+
+    # for k in range(1, len(matrix)):
+    #     for j in range(len(matrix)):
+    #         matrix[k][j] = matrix[k][j] - (matrix[k][j] * matrix[k - 1][j])
+    #     vector[k] = vector[k] - (matrix[k][j] * vector[k - 1])
+    # print(matrix)
     # finding the result
     result = [0 for i in range(len(vector))]
     result[-1] = vector[-1]
-    for x in range(len(vector) - 1, 0, -1):
+    for x in range(len(vector) - 1, -1, -1):
         result[x] = vector[x] - sum(matrix[i][i + 1] * result[i + 1] for i in range(x, len(vector) - 1))
     return result
 
