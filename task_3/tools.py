@@ -265,5 +265,20 @@ def gauss_seidel(matrix, vector, x=None):
             return gauss_seidel(matrix, vector, x)
         return [round(i, 3) for i in x]
 
-
+def LU_Decomposition(matrix, vector):
+    L = np.identity(len(matrix))
+    U = np.zeros([len(matrix), len(matrix)])
+    for j in range(len(matrix)):
+        for i in range(len(matrix)):
+            if i <= j:
+                U[i][j] = matrix[i][j] - sum(L[i][k] * U[k][j] for k in range(i))
+            if i > j:
+                L[i][j] = (matrix[i][j] - sum(L[i][k] * U[k][j] for k in range(j))) / U[j][j]
+    y = [vector[0] / L[0][0] for _ in range(len(matrix))]
+    for i in range(1, len(matrix)):
+        y[i] = (vector[i] - sum(L[i][j] * y[j] for j in range(i))) / L[i][i]
+    result = [y[-1] / U[-1][-1] for _ in range(len(matrix))]
+    for i in range(len(matrix) - 1, -1, -1):
+        result[i] = (y[i] - sum(U[i][j] * result[j] for j in range(i + 1, len(matrix)))) / U[i][i]
+    return [round(x, 4) for x in result]
 
