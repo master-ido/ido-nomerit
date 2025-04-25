@@ -1,42 +1,16 @@
-def gauss(matrix, vector):
-    # first step
-    for i in range(len(matrix)):
-        for j in range(i + 1, len(matrix)):
-            matrix[i][j] = matrix[i][j] / matrix[i][i]
-        vector[i] = vector[i] / matrix[i][i]
-        matrix[i][i] = 1
-        # print(matrix)
-        # second step
-        for k in range(i + 1, len(matrix)):
-            for j in range(i, len(matrix)):
-                matrix[k][j] = matrix[k][j] - (matrix[k][j] * matrix[k - 1][j])
-            vector[k] = vector[k] - (matrix[k][j] * vector[k - 1])
-
-    # for k in range(1, len(matrix)):
-    #     for j in range(len(matrix)):
-    #         matrix[k][j] = matrix[k][j] - (matrix[k][j] * matrix[k - 1][j])
-    #     vector[k] = vector[k] - (matrix[k][j] * vector[k - 1])
-    # print(matrix)
-    # finding the result
-    result = [0 for i in range(len(vector))]
-    result[-1] = vector[-1]
-    for x in range(len(vector) - 1, -1, -1):
-        result[x] = vector[x] - sum(matrix[i][i + 1] * result[i + 1] for i in range(x, len(vector) - 1))
-    return result
+import numpy as np
+from tools import multiplying_matrix, LU_Decomposition, gauss, partial_pivoting, solve_with_LU, inverse_matrix, gauss_seidel
 
 matrix = [[3, -3, 2, -4], [-2, -1, 3, -1], [5, -2, -3, 2], [-2, 4, 1, 2]]
 vector = [7.9, -12.5, 18, -8.1]
-print(gauss(matrix, vector))
+A = [[4, 8, 4, 0], [1, 4, 7, 2], [1, 5, 4, -3], [1, 3, 0, -2]]
 
 
-
-
-# # # a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-# # # a[1][1] = a[1][1] / 5
-# # # print(a)
-#
-a = "kop"
-list = [i for i in range(len(a))]
-# print(list)
-
-
+if __name__ == '__main__':
+    print(f"Using Gauss Elimination the result is {gauss(matrix, vector)}")
+    print(f"Using LU Decomposition the result is {solve_with_LU(matrix, vector)}")
+    print(f"Using Gauss-Seidel the result is {gauss_seidel(matrix, vector)}")
+    print(inverse_matrix(A))
+    print(LU_Decomposition(A))
+    A_1 = inverse_matrix(A)
+    print(multiplying_matrix(A, A_1))
