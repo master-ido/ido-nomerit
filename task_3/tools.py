@@ -229,10 +229,10 @@ def partial_pivoting(matrix, vector):
         if max_row != j:
             matrix[j], matrix[max_row] = matrix[max_row], matrix[j]
             vector[j], vector[max_row] = vector[max_row], vector[j]
-    return matrix
+    return matrix, vector
 
 def gauss(matrix, vector):
-    matrix = partial_pivoting(matrix, vector)
+    matrix, vector = partial_pivoting(matrix, vector)
     for i in range(len(matrix)):
         pivot = matrix[i][i]
         for j in range(i, len(matrix)):
@@ -251,7 +251,7 @@ def gauss(matrix, vector):
 def gauss_seidel(matrix, vector, x=None):
     if x is None:
         x = np.random.rand(len(matrix))
-    matrix = partial_pivoting(matrix, vector)
+    matrix, vector = partial_pivoting(matrix, vector)
     reference_x = x.copy()
     for i in range(len(matrix)):
         sum = 0
@@ -304,8 +304,3 @@ def multiplying_matrix(matrix_1, matrix_2):
                 result[i][j] += matrix_1[i][k] * matrix_2[k][j]
     return result
 
-matrix = [[3, -3, 2, -4], [-2, -1, 3, -1], [5, -2, -3, 2], [-2, 4, 1, 2]]
-# result[i][j] = sum(matrix_1[i][j] * matrix_2[j][i] for j in range(len(matrix_1)))
-
-L, U = LU_Decomposition(matrix)
-print(multiplying_matrix(L, U))
