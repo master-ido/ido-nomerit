@@ -198,12 +198,6 @@ def newton_raphson_2D(f, g, x, y, x0=None, y0=None):
         return
     return newton_raphson_2D(f, g, x_new, y_new, x0, y0)
 
-def f(x, y):
-    return (4 * y ** 2) + (4 * y) - (52 * x) - 19
-
-def g(x, y):
-    return (169 * x ** 2) + (3 * y ** 2) - (111 * x) - (10 * y)
-
 
 
 def present_function_3D(function):
@@ -348,17 +342,3 @@ def present_polynom(function, x_points, y_points):
     plt.legend()
     plt.grid(True)
     plt.show()
-
-
-def last(function):
-    chosen_number = float(input("Choose a number between 0 to 0.5: "))
-    print("\n" f"The analytic result is {function(chosen_number)}" "\n")
-    measure_points_1 = np.linspace(0, 0.5, 4)
-    measure_points_2 = np.linspace(0, 0.5, 8)
-    measure_results_1 = function(measure_points_1)
-    measure_results_2 = function(measure_points_2)
-    print(f"The interpolation result using 4 measure points is {lagrange(measure_points_1, measure_results_1, chosen_number)}" "\n")
-    present_polynom(function, measure_points_1, measure_results_1)
-    print(f"The interpolation result using 8 measure points is {lagrange(measure_points_2, measure_results_2, chosen_number)}")
-    present_polynom(function, measure_points_2, measure_results_2)
-    present_function(function)
