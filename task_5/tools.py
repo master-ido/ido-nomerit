@@ -367,7 +367,7 @@ def m_cubic_splines(x_points, y_points):
         mat[i][i] = u[i]
     for i in range(1, len(h) - 2):
         mat[i][i + 1], mat[i + 1][i] = h[i], h[i]
-    return [0] + banded_system(mat, v) + [0], h
+    return [0] + banded_system(mat, v[1: -1]) + [0], h
 
 def cubic_spline_coeff(x_points, y_points):
     m, h = m_cubic_splines(x_points, y_points)
@@ -375,10 +375,6 @@ def cubic_spline_coeff(x_points, y_points):
     b = [(m[i] * 3 * x_points[i + 1] - m[i + 1] * 3 * x_points[i]) / 6 * h[i] for i in range(len(m) - 1)]
     c = [(m[i + 1] * 3 * (x_points[i] ** 2) - m[i] * 3 * (x_points[i + 1] ** 2) + 6 * (y_points[i + 1] - y_points[i]) + (h[i] ** 2) * (m[i] - m[i + 1])) / 6 * h[i] for i in range(len(m) - 1)]
     d = [(m[i] * (x_points[i + 1] ** 3) - m[i + 1] * (x_points[i] ** 3) + 6 * (x_points[i + 1] * y_points[i] - x_points[i] * y_points[i + 1]) + (h[i] ** 2) * (m[i + 1] * x_points[i] - m[i] * x_points[i + 1])) / 6 * h[i] for i in range(len(m) - 1)]
-    return a, b, c, d
-
-def spline_function(x_points, y_points):
-    a, b, c, d = cubic_spline_coeff(x_points, y_points)
     s_use, s = [], []
     for i in range(len(a)):
         s_use.append(a[i])
@@ -386,6 +382,39 @@ def spline_function(x_points, y_points):
         s_use.append(c[i])
         s_use.append(d[i])
         s.append(s_use)
+    return s
 
+def spline_function_result(x_points, y_points, x):
+    result = 0
+    s = cubic_spline_coeff(x_points, y_points)
+    for i in range(len(x_points)):
+        if x > x_points[i] and x < x_points[i + 1]:
+            for j in range(len(s.shape[1])):
+                result += s[i][j] * (x ** (len(s.shape[1]) - 1 - j))
+    return result
 
+def spline_function(x_points, y_points):
+    return lambda x: spline_function_result(x_points, y_points, x)
+
+def spline_derivative_result(x_points, y_points, x):
+    result = 0
+    s = cubic_spline_coeff(x_points, y_points)
+    for i in range(len(x_points)):
+        if x > x_points[i] and x < x_points[i + 1]:
+            result += (3 * s[i][0] * (x ** 2)) + (2 * s[i][1] * x) + s[i][2]
+    return result
+
+def spline_derivative(x_points, y_points):
+    return lambda x: spline_derivative_result(x_points, y_points, x)
+
+def spline_second_derivative_result(x_points, y_points, x):
+    result = 0
+    s = cubic_spline_coeff(x_points, y_points)
+    for i in range(len(x_points)):
+        if x > x_points[i] and x < x_points[i + 1]:
+            result += (6 * s[i][0] * x) + (2 * s[i][1])
+    return result
+
+def spline_second_derivative(x_points, y_points):
+    return lambda x: spline_second_derivative_result(x_points, y_points, x)
 
