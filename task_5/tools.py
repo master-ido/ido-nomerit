@@ -353,68 +353,153 @@ def banded_system(mat, res):
         x[i] = (res[i] - mat[i][i + 1] * x[i + 1]) / mat[i][i]
     return [round(i, 7) for i in x]
 
-def cubic_spline_parameters(x_points, y_points, x):
+def cubic_spline_parameters(x_points, y_points):
     h = [x_points[i + 1] - x_points[i] for i in range(len(x_points) - 1)]
-    u = [2 * (h[i] + h[i - 1]) for i in range(1, len(h) + 1)]
+    u = [2 * (h[i] + h[i - 1]) for i in range(1, len(h))] # the length might be too long
     k = [(y_points[i + 1] - y_points[i]) / h[i] for i in range(len(h))]
-    v = [6 * (k[i] - k[i - 1]) for i in range(1, len(k) + 1)]
+    v = [6 * (k[i] - k[i - 1]) for i in range(1, len(k))]
     return h, u, v
+
+# def m_cubic_splines(x_points, y_points):
+#     h, u, v = cubic_spline_parameters(x_points, y_points)
+#     mat = np.zeros((len(u), len(u)))
+#     for i in range(len(u)):
+#         mat[i][i] = u[i]
+#     for i in range(len(u) - 1):
+#         mat[i][i + 1] = h[i]
+#         mat[i + 1][i] = h[i]
+#     return ([0] + banded_system(mat, v) + [0]), h
 
 def m_cubic_splines(x_points, y_points):
     h, u, v = cubic_spline_parameters(x_points, y_points)
-    mat = np.zeros[len(u), len(u)]
-    for i in range(1, len(u) - 1):
+    mat = np.zeros((len(u), len(u)))
+    for i in range(len(u)):
         mat[i][i] = u[i]
-    for i in range(1, len(h) - 2):
-        mat[i][i + 1], mat[i + 1][i] = h[i], h[i]
-    return [0] + banded_system(mat, v[1: -1]) + [0], h
-
+    for i in range(len(u) - 1):
+        mat[i][i + 1] = h[i + 1]
+        mat[i + 1][i] = h[i + 1]
+    return [0] + banded_system(mat, v) + [0], h
+# mat, v = m_cubic_splines(x_points, y_points)
 def cubic_spline_coeff(x_points, y_points):
     m, h = m_cubic_splines(x_points, y_points)
-    a = [(m[i + 1] - m[i]) / 6 * h[i] for i in range(len(m) - 1)]
-    b = [(m[i] * 3 * x_points[i + 1] - m[i + 1] * 3 * x_points[i]) / 6 * h[i] for i in range(len(m) - 1)]
-    c = [(m[i + 1] * 3 * (x_points[i] ** 2) - m[i] * 3 * (x_points[i + 1] ** 2) + 6 * (y_points[i + 1] - y_points[i]) + (h[i] ** 2) * (m[i] - m[i + 1])) / 6 * h[i] for i in range(len(m) - 1)]
-    d = [(m[i] * (x_points[i + 1] ** 3) - m[i + 1] * (x_points[i] ** 3) + 6 * (x_points[i + 1] * y_points[i] - x_points[i] * y_points[i + 1]) + (h[i] ** 2) * (m[i + 1] * x_points[i] - m[i] * x_points[i + 1])) / 6 * h[i] for i in range(len(m) - 1)]
-    s_use, s = [], []
+    a = [(m[i + 1] - m[i]) / (6 * h[i]) for i in range(len(h))]
+    b = [(m[i] * x_points[i + 1] - m[i + 1] * x_points[i]) / (2 * h[i]) for i in range(len(m) - 1)]
+    c = [((m[i + 1] * 3 * (x_points[i] ** 2) - m[i] * 3 * (x_points[i + 1] ** 2)) + (6 * (y_points[i + 1] - y_points[i])) + ((h[i] ** 2) * (m[i] - m[i + 1]))) / (6 * h[i]) for i in range(len(m) - 1)]
+    d = [(m[i] * (x_points[i + 1] ** 3) - m[i + 1] * (x_points[i] ** 3) + 6 * (x_points[i + 1] * y_points[i] - x_points[i] * y_points[i + 1]) + (h[i] ** 2) * (m[i + 1] * x_points[i] - m[i] * x_points[i + 1])) / (6 * h[i]) for i in range(len(m) - 1)]
+    s = []
     for i in range(len(a)):
-        s_use.append(a[i])
-        s_use.append(b[i])
-        s_use.append(c[i])
-        s_use.append(d[i])
+        s_use = [a[i], b[i], c[i], d[i]]
         s.append(s_use)
     return s
 
-def spline_function_result(x_points, y_points, x):
-    result = 0
+def cubic_spline_function_result(x_points, y_points, x):
     s = cubic_spline_coeff(x_points, y_points)
-    for i in range(len(x_points)):
-        if x > x_points[i] and x < x_points[i + 1]:
-            for j in range(len(s.shape[1])):
-                result += s[i][j] * (x ** (len(s.shape[1]) - 1 - j))
-    return result
+    for i in range(len(x_points) - 1):
+        if x_points[i] < x < x_points[i + 1]:
+            result = 0
+            for j in range(len(s[0])):
+                result += s[i][j] * (x ** (len(s[0]) - 1 - j))
+            return result
 
-def spline_function(x_points, y_points):
-    return lambda x: spline_function_result(x_points, y_points, x)
+def cubic_spline_function(x_points, y_points):
+    return lambda x: cubic_spline_function_result(x_points, y_points, x)
 
-def spline_derivative_result(x_points, y_points, x):
-    result = 0
+def cubic_spline_derivative_result(x_points, y_points, x):
     s = cubic_spline_coeff(x_points, y_points)
-    for i in range(len(x_points)):
-        if x > x_points[i] and x < x_points[i + 1]:
-            result += (3 * s[i][0] * (x ** 2)) + (2 * s[i][1] * x) + s[i][2]
-    return result
+    for i in range(len(x_points) - 1):
+        if x_points[i] < x < x_points[i + 1]:
+            result = (3 * s[i][0] * (x ** 2)) + (2 * s[i][1] * x) + s[i][2]
+            return result
 
-def spline_derivative(x_points, y_points):
-    return lambda x: spline_derivative_result(x_points, y_points, x)
+def cubic_spline_derivative(x_points, y_points):
+    return lambda x: cubic_spline_derivative_result(x_points, y_points, x)
 
-def spline_second_derivative_result(x_points, y_points, x):
-    result = 0
+def cubic_spline_second_derivative_result(x_points, y_points, x):
     s = cubic_spline_coeff(x_points, y_points)
-    for i in range(len(x_points)):
-        if x > x_points[i] and x < x_points[i + 1]:
-            result += (6 * s[i][0] * x) + (2 * s[i][1])
-    return result
+    for i in range(len(x_points) - 1):
+        if x_points[i] < x < x_points[i + 1]:
+            result = (6 * s[i][0] * x) + (2 * s[i][1])
+            return result
 
-def spline_second_derivative(x_points, y_points):
-    return lambda x: spline_second_derivative_result(x_points, y_points, x)
+def cubic_spline_second_derivative(x_points, y_points):
+    return lambda x: cubic_spline_second_derivative_result(x_points, y_points, x)
 
+
+
+def plot_spline_and_derivatives(x_points, y_points, num_points=100):
+    spline = cubic_spline_function(x_points, y_points)
+    spline_deriv = cubic_spline_derivative(x_points, y_points)
+    spline_2nd_deriv = cubic_spline_second_derivative(x_points, y_points)
+    plt.figure(figsize=(10, 6))
+    for i in range(len(x_points) - 1):
+        x_dense = np.linspace(x_points[i] + 1e-6, x_points[i + 1] - 1e-6, num_points)
+        y_spline = [spline(x) for x in x_dense]
+        y_deriv = [spline_deriv(x) for x in x_dense]
+        y_2nd_deriv = [spline_2nd_deriv(x) for x in x_dense]
+        plt.plot(x_dense, y_spline, color='blue', label='Spline' if i == 0 else "")
+        plt.plot(x_dense, y_deriv, color='green', linestyle='--', label="Spline'" if i == 0 else "")
+        plt.plot(x_dense, y_2nd_deriv, color='red', linestyle=':', label="Spline''" if i == 0 else "")
+    plt.scatter(x_points, y_points, color='black', label='Data points')
+    plt.title('Cubic Spline and Its Derivatives')
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def present_parametric_spline(x_points, y_points, num_points=100):
+    x_points.append(x_points[0])
+    y_points.append(y_points[0])
+    t_points = [i for i in range(len(x_points))]
+    spline_x = cubic_spline_function(t_points, x_points)
+    spline_y = cubic_spline_function(t_points, y_points)
+    plt.figure(figsize=(10, 6))
+    for i in range(len(t_points) - 1):
+        t_dense = np.linspace(t_points[i] + 1e-6, t_points[i + 1] - 1e-6, num_points)
+        y_spline_x = [spline_x(t) for t in t_dense]
+        y_spline_y = [spline_y(t) for t in t_dense]
+        plt.plot(y_spline_x, y_spline_y, color='black', linestyle='-', label="" if i == 0 else "")
+    plt.scatter(x_points, y_points, color='black', label='Data points')
+    plt.title('Parametric Spline')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def first_order_spline_coeffs(x_points, y_points):
+    h = [y_points[i + 1] - y_points[i] for i in range(len(y_points) - 1)]
+    k = [x_points[i + 1] - x_points[i] for i in range(len(y_points) - 1)]
+    a = [h[i] / k[i] for i in range(len(y_points) - 1)]
+    b = [y_points[i] - x_points[i] * (h[i] / k[i]) for i in range(len(y_points) - 1)]
+    return a, b
+
+def first_order_spline_result(x_points, y_points, x):
+    a, b = first_order_spline_coeffs(x_points, y_points)
+    for i in range(len(x_points) - 1):
+        if x_points[i] < x < x_points[i + 1]:
+            return a * x + b
+
+def first_order_spline(x_points, y_points):
+    return lambda x: first_order_spline_result(x_points, y_points, x)
+
+def hermite(x_points, y_points):
+
+
+
+# x_points = [0, 2, 3, 4, 7, 8]
+# y_points = [4, 2, 8, 10, 4, -2]
+x_points = [3, 2, 2.5, 4, 5, 4]
+y_points = [4, 3, 1, 2, 3.5, 4.5]
+# mat, v = m_cubic_splines(x_points, y_points)
+# print(banded_system(mat, v))
+# print(gauss(mat, v))
+# print(plot_spline_and_derivatives(x_points,y_points))
+# print(cubic_spline_parameters(x_points, y_points))
+# print(m_cubic_splines(x_points,y_points))
+# print(cubic_spline_coeff(x_points,y_points))
+# print(spline_function_result(x_points, y_points, 4.01))
+#problems: 4.01, 1.99, 6.99
+# plot_spline_and_derivatives(x_points,y_points,num_points=100)
+present_parametric_spline(x_points, y_points)
