@@ -360,15 +360,6 @@ def cubic_spline_parameters(x_points, y_points):
     v = [6 * (k[i] - k[i - 1]) for i in range(1, len(k))]
     return h, u, v
 
-# def m_cubic_splines(x_points, y_points):
-#     h, u, v = cubic_spline_parameters(x_points, y_points)
-#     mat = np.zeros((len(u), len(u)))
-#     for i in range(len(u)):
-#         mat[i][i] = u[i]
-#     for i in range(len(u) - 1):
-#         mat[i][i + 1] = h[i]
-#         mat[i + 1][i] = h[i]
-#     return ([0] + banded_system(mat, v) + [0]), h
 
 def m_cubic_splines(x_points, y_points):
     h, u, v = cubic_spline_parameters(x_points, y_points)
@@ -379,7 +370,6 @@ def m_cubic_splines(x_points, y_points):
         mat[i][i + 1] = h[i + 1]
         mat[i + 1][i] = h[i + 1]
     return [0] + banded_system(mat, v) + [0], h
-# mat, v = m_cubic_splines(x_points, y_points)
 def cubic_spline_coeff(x_points, y_points):
     m, h = m_cubic_splines(x_points, y_points)
     a = [(m[i + 1] - m[i]) / (6 * h[i]) for i in range(len(h))]
@@ -436,9 +426,9 @@ def plot_spline_and_derivatives(x_points, y_points, num_points=100):
         y_spline = [spline(x) for x in x_dense]
         y_deriv = [spline_deriv(x) for x in x_dense]
         y_2nd_deriv = [spline_2nd_deriv(x) for x in x_dense]
-        plt.plot(x_dense, y_spline, color='blue', label='Spline' if i == 0 else "")
-        plt.plot(x_dense, y_deriv, color='green', linestyle='--', label="Spline'" if i == 0 else "")
-        plt.plot(x_dense, y_2nd_deriv, color='red', linestyle=':', label="Spline''" if i == 0 else "")
+        plt.plot(x_dense, y_spline, color='blue', linewidth=4, label='Spline' if i == 0 else "")
+        plt.plot(x_dense, y_deriv, color='green', linewidth=2, label="Spline'" if i == 0 else "")
+        plt.plot(x_dense, y_2nd_deriv, color='red', linewidth=1, label="Spline''" if i == 0 else "")
     plt.scatter(x_points, y_points, color='black', label='Data points')
     plt.title('Cubic Spline and Its Derivatives')
     plt.xlabel('x')
@@ -447,14 +437,14 @@ def plot_spline_and_derivatives(x_points, y_points, num_points=100):
     plt.grid(True)
     plt.show()
 
-def present_parametric_spline(x_points, y_points, num_points=100):
-    x_points.append(x_points[0])
-    y_points.append(y_points[0])
+def plot_parametric_spline(x_points, y_points, num_points=100):
+    x_points.extend([x_points[0], x_points[1]])
+    y_points.extend([y_points[0], y_points[1]])
     t_points = [i for i in range(len(x_points))]
     spline_x = cubic_spline_function(t_points, x_points)
     spline_y = cubic_spline_function(t_points, y_points)
     plt.figure(figsize=(10, 6))
-    for i in range(len(t_points) - 1):
+    for i in range(len(t_points) - 2):
         t_dense = np.linspace(t_points[i] + 1e-6, t_points[i + 1] - 1e-6, num_points)
         y_spline_x = [spline_x(t) for t in t_dense]
         y_spline_y = [spline_y(t) for t in t_dense]
@@ -479,27 +469,60 @@ def first_order_spline_result(x_points, y_points, x):
     a, b = first_order_spline_coeffs(x_points, y_points)
     for i in range(len(x_points) - 1):
         if x_points[i] < x < x_points[i + 1]:
-            return a * x + b
+            return a[i] * x + b[i]
 
 def first_order_spline(x_points, y_points):
     return lambda x: first_order_spline_result(x_points, y_points, x)
 
-def hermite(x_points, y_points):
+def hermite_result(x_points, y_points, tension, x):
+    v_in = [tension * (y_points[i + 1] - y_points[i - 1]) for i in range(1, len(y_points) - 1)]
+    v = [(y_points[1] - y_points[0]) / 2] + v_in + [(y_points[-1] - y_points[-2]) / 2]
+    for i in range(len(x_points) - 1):
+        if x_points[i] <= x <= x_points[i + 1]:
+            new_x = (x - x_points[i]) / (x_points[i + 1] - x_points[i])
+            H_0 = (2 * new_x ** 3) - (3 * new_x ** 2) + 1
+            H_1 = (new_x ** 3) - (2 * new_x ** 2) + new_x
+            H_2 = (-2 * new_x ** 3) + (3 * new_x ** 2)
+            H_3 = (new_x ** 3) - (new_x ** 2)
+            return H_0 * y_points[i] + H_1 * v[i] + H_2 * y_points[i + 1] + H_3 * v[i + 1]
 
+def Hermite(x_points, y_points, tension):
+    return lambda x: hermite_result(x_points, y_points, tension, x)
 
+def step_function(x):
+    if 0 <= x < 2.5:
+        return 1
+    if 2.5 <= x <=5:
+        return -1
+    return 0
 
-# x_points = [0, 2, 3, 4, 7, 8]
-# y_points = [4, 2, 8, 10, 4, -2]
-x_points = [3, 2, 2.5, 4, 5, 4]
-y_points = [4, 3, 1, 2, 3.5, 4.5]
-# mat, v = m_cubic_splines(x_points, y_points)
-# print(banded_system(mat, v))
-# print(gauss(mat, v))
-# print(plot_spline_and_derivatives(x_points,y_points))
-# print(cubic_spline_parameters(x_points, y_points))
-# print(m_cubic_splines(x_points,y_points))
-# print(cubic_spline_coeff(x_points,y_points))
-# print(spline_function_result(x_points, y_points, 4.01))
-#problems: 4.01, 1.99, 6.99
-# plot_spline_and_derivatives(x_points,y_points,num_points=100)
-present_parametric_spline(x_points, y_points)
+x_points_1 = [0, 2, 3, 4, 7, 8]
+y_points_1 = [4, 2, 8, 10, 4, -2]
+x_points_2 = [3, 2, 2.5, 4, 5, 4]
+y_points_2 = [4, 3, 1, 2, 3.5, 4.5]
+x_points_3 = [0, 1, 2, 3, 4, 5]
+y_points_3 = [1, 1, 1, -1, -1, -1]
+
+def plot_cubic_first_order_hermite(x_points, y_points, num_points=100):
+    cubic_spline = cubic_spline_function(x_points, y_points)
+    first_order = first_order_spline(x_points, y_points)
+    hermite_spline = Hermite(x_points, y_points, 0.5)
+    plt.figure(figsize=(10, 6))
+    for i in range(len(x_points) - 1):
+        x_dense = np.linspace(x_points[i] + 1e-6, x_points[i + 1] - 1e-6, num_points)
+        y_cubic_spline = [cubic_spline(x) for x in x_dense]
+        y_first_order = [first_order(x) for x in x_dense]
+        y_hermite_spline = [hermite_spline(x) for x in x_dense]
+        y_step_function = [step_function(x) for x in x_dense]
+        plt.plot(x_dense, y_cubic_spline, color='blue', label='Cubic' if i == 0 else "")
+        plt.plot(x_dense, y_first_order, color='green', linewidth=5, label="First Order" if i == 0 else "")
+        plt.plot(x_dense, y_hermite_spline, color='red', label="Hermite" if i == 0 else "")
+        plt.plot(x_dense, y_step_function, c='black', label="Step Function" if i == 0 else "")
+    plt.scatter(x_points, y_points, color='black', label='Data points')
+    plt.title('Cubic Spline, First Order spline, Hermite')
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
