@@ -475,44 +475,68 @@ def simpson_3_8_combined(function, limits, analytic_result, iteration=1):
         return simpson_3_8_combined(function, limits, analytic_result, iteration + 1)
     return ((3 * h) / 8) * result, iteration
 
+def trapeze_combined(function, limits, n):
+    h = (limits[1] - limits[0]) / n
+    x = np.linspace(limits[0], limits[1], n)
+    result = function(limits[0]) + function(limits[1]) + sum(2 * function(x[i]) for i in range(1, len(x) - 1))
+    return (h / 2) * result
+
+def romberg_loop(function, limits, analytic_result):
+    mat = [[]]
+    for i in range(200):
+        mat.append([0] * (len(mat[0]) + 1))
+        for row in mat[:-1]:
+            row.append(0)
+        n = 2 ** i
+        mat[i][0] = trapeze_combined(function, limits, n)
+        for k in range(1, i + 1):
+            mat[i][k] = (4 ** k * mat[i][k - 1] - mat[i - 1][k - 1]) / ((4 ** k) - 1)
+        if i > 0 and abs(mat[i][i] - analytic_result) < 10 ** -3:
+            return mat[i][i], i
+
+def romberg_recursion(function, limits, analytic_result, mat=None, i=0):
+    if mat is None:
+        mat = [[]]
+    mat.append([0] * (len(mat[0]) + 1))
+    for row in mat[:-1]:
+        row.append(0)
+    n = 2 ** i
+    mat[i][0] = trapeze_combined(function, limits, n)
+    for k in range(1, i + 1):
+        mat[i][k] = (4 ** k * mat[i][k - 1] - mat[i - 1][k - 1]) / ((4 ** k) - 1)
+    if abs(mat[i][i] - analytic_result) > 10 ** -3:
+        return romberg_recursion(function, limits, analytic_result, mat, i + 1)
+    return mat[i][i], i
+
 def quad_function(function, limits):
     a = ((limits[1] - limits[0]) / 2)
     b = ((limits[1] + limits[0]) / 2)
     return lambda t: (function((a * t) + b)) * a
 
+quad_table = [[0.57735026, -0.57735026, 1, 1], [0.77459667, -0.77459667, 0, 0.88888889, 0.55555555, 0.55555555], [0.86113631, -0.86113631, 0.33998104, -0.33998104, 0.65214515, 0.65214515, 0.34785485, 0.34785485], [0.90617985, -0.90617985, 0.53846931, -0.53846931, 0, 0.56888889, 0.47862867, 0.47862867, 0.23692689, 0.23692689], [0.93246951, -0.93246951, 0.66120939, -0.66120939, 0.23861918, -0.23861918, 0.46791393, 0.46791393, 0.36076157, 0.36076157, 0.17132449, 0.17132449], [0.94910791, -0.94910791, 0.74153119, -0.74153119, 0.40584515, -0.40584515, 0, 0.41795918, 0.38183005, 0.38183005, 0.27970539, 0.27970539, 0.12948497, 0.12948497], [0.96028986, -0.96028986, 0.79666648, -0.79666648, 0.52553241, -0.52553241, 0.18343464, -0.18343464, 0.36268378, 0.36268378, 0.31370665, 0.31370665, 0.22238103, 0.22238103, 0.10122854, 0.10122854], [0.97390653, -0.97390653, 0.86506337, -0.86506337, 0.67940957, -0.67940957, 0.43339539, -0.43339539, 0.14887434, -0.14887434, 0.29552422, 0.29552422, 0.26926672, 0.26926672, 0.21908636, 0.21908636, 0.14945135, 0.14945135, 0.06667134, 0.06667134]]
+
 def open_quad(function, limits, analytic_result, iteration = 0):
     table = quad_table
     g = quad_function(function, limits)
     result = sum(g(table[iteration][i]) * table[iteration][len(table[iteration]) - 1 - i] for i in range(len(table[iteration]) // 2))
-    if abs(result - analytic_result) > 10 ** -5 and iteration < len(table) - 1:
+    if abs(result - analytic_result) > 10 ** -5 and iteration < 7:
         return open_quad(function, limits, analytic_result, iteration + 1)
     return result, iteration
 
+def simpson_3_over_8(function, limits):
+    h = (limits[1] - limits[0]) / 6
+    a_1 = (limits[0] + limits[1]) / 2
+    return h * (function(limits[0]) + function(a_1) + function(limits[1]))
 
-# def simpson_3_over_8(function, limits):
-#     h = (limits[1] - limits[0]) / 6
-#     a_1 = (limits[0] + limits[1]) / 2
-#     return h * (function(limits[0]) + function(a_1) + function(limits[1]))
 
 
-def function(x):
-    return x * np.e ** (2 * x)
 
-# limits = [0, 4]
 
-def function_1(x):
-    return np.e ** (-(x ** 2))
 
-quad_table = [[0.57735026, -0.57735026, 1, 1], [0.77459667, -0.77459667, 0, 0.88888889, 0.55555555, 0.55555555], [0.86113631, -0.86113631, 0.33998104, -0.33998104, 0.65214515, 0.65214515, 0.34785485, 0.34785485], [0.90617985, -0.90617985, 0.53846931, -0.53846931, 0, 0.56888889, 0.47862867, 0.47862867, 0.23692689, 0.23692689], [0.93246951, -0.93246951, 0.66120939, -0.66120939, 0.23861918, -0.23861918, 0.46791393, 0.46791393, 0.36076157, 0.36076157, 0.17132449, 0.17132449], [0.94910791, -0.94910791, 0.74153119, -0.74153119, 0.40584515, -0.40584515, 0, 0.41795918, 0.38183005, 0.38183005, 0.27970539, 0.27970539, 0.12948497, 0.12948497], [0.96028986, -0.96028986, 0.79666648, -0.79666648, 0.52553241, -0.52553241, 0.18343464, -0.18343464, 0.36268378, 0.36268378, 0.31370665, 0.31370665, 0.22238103, 0.22238103, 0.10122854, 0.10122854], [0.97390653, -0.97390653, 0.86506337, -0.86506337, 0.67940957, -0.67940957, 0.43339539, -0.43339539, 0.14887434, -0.14887434, 0.29552422, 0.29552422, 0.26926672, 0.26926672, 0.21908636, 0.21908636, 0.14945135, 0.14945135, 0.06667134, 0.06667134]]
 
-# limits = [0, 2]
-limits = [0, 4]
-dividing_steps = 20
-analytic_result = 5216.9265
+
+
 # print(trapeze_method(function_1, limits, dividing_steps))
 # print(simpson_1_3_combined(function_1, limits, dividing_steps))
 # print(simpson_3_8_combined(function, limits, analytic_result, iteration=1))
-print(open_quad(function, limits, analytic_result))
-
-
-
+# print(open_quad(function, limits, analytic_result))
