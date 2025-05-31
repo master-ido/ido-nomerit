@@ -528,11 +528,9 @@ def simpson_3_over_8(function, limits):
     a_1 = (limits[0] + limits[1]) / 2
     return h * (function(limits[0]) + function(a_1) + function(limits[1]))
 
-
-
 def finite_diff_order_4_error(function, x, h):
     forward = (-25 * function(x) + 48 * function(x + h) - 36 * function(x + (2 * h)) + 16 * function(x + (3 * h)) - 3 * function(x + (4 * h))) / (12 * h)
-    backward = (25 * function(x) - 48 * function(x + h) + 36 * function(x + (2 * h)) - 16 * function(x + (3 * h)) + 3 * function(x + (4 * h))) / (12 * h)
-    centered = (8 * function(x + h) - 8 * function(x - h) - function(x + (2 * h)) + function(x - h)) / (12 * h)
+    backward = (25 * function(x) - 48 * function(x - h) + 36 * function(x - (2 * h)) - 16 * function(x - (3 * h)) + 3 * function(x - (4 * h))) / (12 * h)
+    centered = (8 * function(x + h) - 8 * function(x - h) - function(x + (2 * h)) + function(x - (2 * h))) / (12 * h)
     return forward, backward, centered
 
