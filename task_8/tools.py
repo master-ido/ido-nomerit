@@ -534,16 +534,77 @@ def finite_diff_order_4_error(function, x, h):
     centered = (8 * function(x + h) - 8 * function(x - h) - function(x + (2 * h)) + function(x - (2 * h))) / (12 * h)
     return forward, backward, centered
 
-def euler_method(dy_dx, initial_x, start_con, final_x, h, current_step=1):
-    if (h * current_step) + (initial_x - h * (current_step - 1)) == final_x:
-        return start_con + h * dy_dx(initial_x)
-    return euler_method(dy_dx, initial_x + h, start_con + h * dy_dx(initial_x), final_x, h, current_step + 1)
+def euler_method(dy_dx, initial_x, initial_y, final_x, h):
+    if round(initial_x + h, 3) == final_x:
+        return initial_y + h * dy_dx(initial_x, initial_y)
+    return euler_method(dy_dx, initial_x + h, initial_y + h * dy_dx(initial_x, initial_y), final_x, h)
 
 
-def dy_dx(x):
-    return 4 * (x ** 2)
-initial_x = 1
-start_con = 1
-final_x = 1.1
-h = 0.05
-print(euler_method(dy_dx, initial_x, start_con, final_x, h))
+def runga_kutta_2_order(dy_dx, x, y, final_x, h):
+    f_i = dy_dx(x, y)
+    y_i = (h / 2) * (f_i + dy_dx(x + h, h * f_i)) + y
+    if x + h == final_x:
+        return x, y_i
+    return runga_kutta_2_order(dy_dx, x + h, y_i, final_x, h)
+
+def runga_kutta_4_order(dy_dx, x, y, final_x, h, results=None):
+    if results is None:
+        results = [(x,y)]
+    F1 = dy_dx(x, y)
+    F2 = dy_dx(x + (h / 2), y + (h / 2) * F1)
+    F3 = dy_dx(x + (h / 2), y + (h / 2) * F2)
+    F4 = dy_dx(x + h, y + h * F3)
+    y_i = y + (h / 6) * (F1 + 2 * (F2 + F3) + F4)
+    results.append((x + h, y_i))
+    if x + h == final_x:
+        return results
+    return runga_kutta_4_order(dy_dx, x + h, y_i, final_x, h, results)
+
+def adams_4_with_rk_4(dy_dx, x, y, final_x, h, results=None):
+    if results is None:
+        results = runga_kutta_4_order(dy_dx, x, y, x + (3 * h), h)
+    f1 = dy_dx(results[-1][0], results[-1][1])
+    f2 = dy_dx(results[-2][0], results[-2][1])
+    f3 = dy_dx(results[-3][0], results[-3][1])
+    f4 = dy_dx(results[-4][0], results[-4][1])
+    y_pre = results[-1][1] + (h / 24) * (55 * f1 - 59 * f2 + 37 * f3 - 9 * f4)
+    y_cor_1 = results[-1][1] + (h / 24) * (9 * dy_dx(results[-1][0] + h, y_pre) + 19 * f1 - 5 * f2 + f3)
+    y_cor_2 = results[-1][1] + (h / 24) * (9 * dy_dx(results[-1][0] + h, y_cor_1) + 19 * f1 - 5 * f2 + f3)
+    y_cor_3 = results[-1][1] + (h / 24) * (9 * dy_dx(results[-1][0] + h, y_cor_2) + 19 * f1 - 5 * f2 + f3)
+    results.append((results[-1][0] + h, y_cor_3))
+    if x + h == final_x:
+        return y_cor_3
+    return adams_4_with_rk_4(dy_dx, x + h, y_cor_3, final_x, h, results)
+
+def leapfrog(d2x_dt2, initial_x, initial_v, h, final_x):
+    half_step_v = initial_v + (h / 2) * d2x_dt2(initial_x)
+    next_x = initial_x + half_step_v * h
+    if round(initial_x + h, 3) == final_x:
+        return next_x
+    full_step_v = half_step_v + (h / 2) * d2x_dt2(next_x)
+    return leapfrog(d2x_dt2, initial_x + h, full_step_v, h, final_x)
+def f(x, y):
+    return (-2 * y) / (1 + x)
+h = 0.5
+y = 2
+x = 0
+final_x = 2
+
+def d2x_dt2(y):
+    return - (40 * y) / 2
+initial_y = 0.7
+initial_v = 0
+print(leapfrog(d2x_dt2, initial_y, initial_v, 0.1, 2.5))
+
+
+
+# print(adams_4_with_rk_4(f, x, y, final_x, h))
+#
+# def dy_dx(x, y):
+#     return 4 * (x ** 2)
+# initial_x = 1
+# start_con = 1
+# final_x = 1.1
+# h = 0.05
+# # print(euler_method(dy_dx, initial_x, start_con, final_x, h))
+# print(runga_kutta_4_order(dy_dx, initial_x, start_con, final_x, h))
