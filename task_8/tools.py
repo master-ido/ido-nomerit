@@ -551,7 +551,33 @@ def euler_method(dy_dx, initial_x, initial_y, final_x, h, x_results=None, y_resu
         return x_results, y_results
     return euler_method(dy_dx, initial_x + h, initial_y + h * dy_dx(initial_x, initial_y), final_x, h, x_results, y_results)
 
+def euler_2nd_order(dy_dt, dv_dt, initial_t, initial_v, initial_y, final_t, h, t_results=None, y_results=None, v_results=None):
+    if t_results is None:
+        t_results = [initial_t]
+        v_results = [initial_v]
+        y_results = [initial_y]
+    t_results.append(initial_t + h)
+    v_results.append(initial_v + h * dv_dt(initial_t, initial_v, initial_y))
+    y_results.append(initial_y + h * initial_v)
+    if round(initial_t + h, 3) == final_t:
+        return [round(t, 4) for t in t_results], [round(v, 4) for v in v_results], [round(y, 4) for y in y_results]
+    return euler_2nd_order(dy_dt, dv_dt, initial_t + h, initial_v + h * dv_dt(initial_t, initial_v, initial_y), initial_y + h * dy_dt(initial_v), final_t, h, t_results, y_results, v_results)
 
+def present_euler_2nd(dy_dt, dv_dt, initial_t, initial_v, initial_y, final_t, h):
+    t_vals, v_vals, y_vals = euler_2nd_order(dy_dt, dv_dt, initial_t, initial_v, initial_y, final_t, h)
+    plt.plot(t_vals, y_vals, marker='o', linestyle='-', color='blue', label="Euler's 2nd Method")
+    plt.xlabel('t')
+    plt.ylabel('y')
+    plt.title("Euler's 2nd Method Approximation")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+def dv_dt(t, v, y):
+    return -20 * y
+def dy_dt(v):
+    return v
+# print(euler_2nd_order(dy_dt, dv_dt, 0, 0, 0.7, 2.5, 0.1))
+# present_euler_2nd(dy_dt, dv_dt, 0, 0, 0.7, 2.5, 0.1)
 def dm_dx(m,x):
     return 10 - 2 * x
 # print(euler_method(dm_dx, 0, 0, 1, 0.05))
@@ -562,9 +588,8 @@ def runga_kutta_2_order(dy_dx, x, y, final_x, h, x_results=None, y_results=None)
         y_results = [y]
     f_i = dy_dx(x, y)
     y_i = (h / 2) * (f_i + dy_dx(x + h, y + h * f_i)) + y
-    x_results.append(x + h)
+    x_results.append(round(x + h, 5))
     y_results.append(y_i)
-    # y_i = (h / 2) * (f_i + dy_dx(x + h, h * f_i)) + y
     if round(x + h, 3) == final_x:
         return x_results, y_results
     return runga_kutta_2_order(dy_dx, x + h, y_i, final_x, h, x_results, y_results)
@@ -580,14 +605,45 @@ def runga_kutta_4_order(dy_dx, x, y, final_x, h, x_results=None, y_results=None)
     F3 = dy_dx(x + (h / 2), y + (h / 2) * F2)
     F4 = dy_dx(x + h, y + h * F3)
     y_i = y + (h / 6) * (F1 + 2 * (F2 + F3) + F4)
-    x_results.append(x + h)
+    x_results.append(round(x + h, 5))
     y_results.append(y_i)
-    # results.append((x + h, y_i))
     if round(x + h, 3) == final_x:
         return x_results, y_results
     return runga_kutta_4_order(dy_dx, x + h, y_i, final_x, h, x_results, y_results)
 
-# print(runga_kutta_4_order(dm_dx, 0, 0, 1, 0.05))
+
+def runga_kutta_4_order_2nd(dv_dt, initial_t, initial_v, initial_y, final_t, h, t_results=None, v_results=None, y_results=None):
+    if t_results is None:
+        t_results = [initial_t]
+        v_results = [initial_v]
+        y_results = [initial_y]
+    F1_y = initial_v
+    F1_v = dv_dt(initial_t, initial_v, initial_y)
+    F2_y = initial_v + (h / 2) * F1_v
+    F2_v = dv_dt(initial_t + (h / 2), initial_v + (h / 2) * F1_v, initial_y + (h / 2) * F1_y)
+    F3_y = initial_v + (h / 2) * F2_v
+    F3_v = dv_dt(initial_t + (h / 2), initial_v + (h / 2) * F2_v, initial_y + (h / 2) * F2_y)
+    F4_y = initial_v + h * F3_v
+    F4_v = dv_dt(initial_t + h, initial_v + h * F3_v, initial_y + h * F3_y)
+    y_next = initial_y + (h / 6) * (F1_y + 2 * (F2_y + F3_y) + F4_y)
+    v_next = initial_v + (h / 6) * (F1_v + 2 * (F2_v + F3_v) + F4_v)
+    t_results.append(round(initial_t + h, 5))
+    v_results.append(v_next)
+    y_results.append(y_next)
+    if round(initial_t + h, 3) == final_t:
+        return t_results, v_results, y_results
+    return runga_kutta_4_order_2nd(dv_dt, initial_t + h, v_next, y_next, final_t, h, t_results, v_results, y_results)
+# print(runga_kutta_4_order_2nd(dv_dt, 0, 0, 0.7, 2.5, 0.1))
+def present_RK4_2nd(dv_dt, initial_t, initial_v, initial_y, final_t, h):
+    t_vals, v_vals, y_vals = runga_kutta_4_order_2nd(dv_dt, initial_t, initial_v, initial_y, final_t, h)
+    plt.plot(t_vals, y_vals, marker='o', linestyle='-', color='blue', label="RK4 2nd - order Method")
+    plt.xlabel('t')
+    plt.ylabel('y')
+    plt.title("RK4 Method Approximation")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+# present_RK4_2nd(dv_dt, 0, 0, 0.7, 2.5, 0.1)
 
 def present_euler(dy_dx, initial_x, initial_y, final_x, h):
     x_vals, y_vals = euler_method(dy_dx, initial_x, initial_y, final_x, h)
@@ -598,7 +654,6 @@ def present_euler(dy_dx, initial_x, initial_y, final_x, h):
     plt.grid(True)
     plt.legend()
     plt.show()
-
 
 def present_rk_2(dy_dx, initial_x, initial_y, final_x, h):
     x_vals, y_vals = runga_kutta_2_order(dy_dx, initial_x, initial_y, final_x, h)
@@ -637,7 +692,7 @@ def adams_4_with_rk_4(dy_dx, x, y, final_x, h, x_results=None, y_results=None):
     y_cor_3 = y_results[-1] + (h / 24) * (9 * dy_dx(x_results[-1] + h, y_cor_2) + 19 * f1 - 5 * f2 + f3)
     x_results.append(x_results[-1] + h)
     y_results.append(y_cor_3)
-    if round(x_results[-1] + h, 3) == final_x:
+    if round(x_results[-1], 3) == final_x:
         return x_results, y_results
     return adams_4_with_rk_4(dy_dx, x + h, y_cor_3, final_x, h, x_results, y_results)
 
@@ -645,7 +700,7 @@ def dy_dx(x, y):
     return (-2 * y) / (1 + x)
 
 x_results, y_results = adams_4_with_rk_4(dy_dx, 0, 2, 10, 0.5)
-print(len(x_results), len(y_results))
+# print(x_results, y_results)
 # print(adams_4_with_rk_4(dy_dx, 0, 2, 10, 0.5))
 def present_adams_4_with_rk_4(dy_dx, initial_x, initial_y, final_x, h):
     x_vals, y_vals = adams_4_with_rk_4(dy_dx, initial_x, initial_y, final_x, h)
@@ -657,18 +712,34 @@ def present_adams_4_with_rk_4(dy_dx, initial_x, initial_y, final_x, h):
     plt.legend()
     plt.show()
 # present_adams_4_with_rk_4(dy_dx, 0, 2, 10, 0.5)
-def leapfrog(d2x_dt2, initial_x, initial_v, h, final_x):
-    half_step_v = initial_v + (h / 2) * d2x_dt2(initial_x)
-    next_x = initial_x + half_step_v * h
-    if round(initial_x + h, 3) == final_x:
-        return next_x
-    full_step_v = half_step_v + (h / 2) * d2x_dt2(next_x)
-    return leapfrog(d2x_dt2, initial_x + h, full_step_v, h, final_x)
+def leapfrog(d2x_dt2, initial_t, initial_v, initial_y, h, final_t, t_results=None, v_results=None, y_results=None):
+    if t_results is None:
+        t_results = [initial_t]
+        y_results = [initial_y]
+    half_step_v = initial_v + (h / 2) * d2x_dt2(initial_y)
+    next_y = initial_y + half_step_v * h
+    t_results.append(round(initial_t + h, 4))
+    y_results.append(round(next_y, 5))
+    if round(initial_t + h, 3) == final_t:
+        return t_results, y_results
+    full_step_v = half_step_v + (h / 2) * d2x_dt2(next_y)
+    return leapfrog(d2x_dt2, initial_t + h, full_step_v, next_y, h, final_t, t_results, v_results, y_results)
+def d2x_dt2(y):
+    return - (40 * y) / 2
+initial_y = 0.7
+initial_v = 0
+# print(leapfrog(d2x_dt2, 0, 0, 0.7, 0.1, 2.5))
 
-# print(leapfrog(d2x_dt2, initial_y, initial_v, 0.1, 2.5))
-
-
-
+def present_leapfrog(d2x_dt2, initial_t, initial_v, initial_y, h, final_t):
+    t_vals, y_vals = leapfrog(d2x_dt2, initial_t, initial_v, initial_y, h, final_t)
+    plt.plot(t_vals, y_vals, marker='o', linestyle='-', color='blue', label="Leapfrog Method")
+    plt.xlabel('t')
+    plt.ylabel('y')
+    plt.title("Leapfrog Method Approximation")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+# present_leapfrog(d2x_dt2, 0, 0, 0.7, 0.05, 2.5)
 
 #
 # def dy_dx(x, y):
