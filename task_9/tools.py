@@ -734,8 +734,8 @@ def shooting_with_RK4(dv_dt, initial_t, initial_y, final_t, final_y, h, tol=10**
         return t_next, y_next
     return shooting_with_RK4(dv_dt, initial_t, initial_y, final_t, final_y, h, tol, second_guess, next_guess)
 
-def q_1(x, t, y):
-    return 0.15 * y
+# def q_1(x, t, y):
+#     return 0.15 * y
 # print(shooting_with_RK4(q_1, 0, 240, 10, 150, 1))
 def present_shooting_with_RK4_2nd(dv_dt, initial_t, initial_y, final_t, final_y, h):
     t_vals, y_vals = shooting_with_RK4(dv_dt, initial_t, initial_y, final_t, final_y, h)
@@ -748,3 +748,33 @@ def present_shooting_with_RK4_2nd(dv_dt, initial_t, initial_y, final_t, final_y,
     plt.show()
 # present_shooting_with_RK4_2nd(q_1, 0, 240, 10, 150, 1)
 
+def present_everything(dv_dt, initial_t, initial_y, final_t, final_y, h, p_x, q_x, r_x):
+    t_vals, y_vals = shooting_with_RK4(dv_dt, initial_t, initial_y, final_t, final_y, h)
+    t, y = finite_diff_2nd_ODE(p_x, q_x, r_x, initial_t, initial_y, final_t, final_y, h)
+    plt.plot(t_vals, y_vals, marker='o', linestyle='-', color='blue', label="Shooting method with RK4 2nd - order Method")
+    plt.plot(t, y, marker='o', linestyle='--', color='red', label="finite difference")
+    plt.xlabel('t')
+    plt.ylabel('y')
+    # plt.title("Shooting Method with RK4 Approximation")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+def q_1(x):
+    return 0.15
+def q_2(x):
+    return 0
+def p_1(x):
+    return 0
+def p_2(x):
+    return -12.5 / 70
+def r_1(x):
+    return 0
+def r_2(x):
+    return 9.81
+def dv_dt_1(x, v, y):
+    return 0.15 * y
+def dv_dt_2(x, v, y):
+    return 9.81 - (12.5 / 70) * v
+
+present_everything(dv_dt_1, 0, 240, 10, 150, 1, p_1, q_1, r_1)
+present_everything(dv_dt_2, 0, 500, 12, 0, 1, p_2, q_2, r_2)
